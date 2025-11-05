@@ -12,6 +12,20 @@ This repository scrapes, extracts, and visualizes tax levy data for eight Oak Pa
 - High School District 200 (Oak Park's proportional share)
 - Oak Park Park District
 
+## Sample Visualizations
+
+### Historical Trends by Agency
+![Levy History Chart](oak_park_levy_by_year.png)
+
+### Total Levy Composition (Stacked)
+![Stacked Chart](oak_park_levy_stacked.png)
+
+### Growth vs Inflation
+![Growth Comparison](oak_park_total_increase_real_inflation.png)
+
+### 2023 Breakdown
+![Breakdown Chart](oak_park_levy_breakdown.png)
+
 ## Quick Start
 
 ### Prerequisites
