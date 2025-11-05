@@ -4,7 +4,7 @@ Automated analysis of Oak Park, Illinois tax levy data from the Cook County Cler
 
 ## Overview
 
-This repository scrapes, extracts, and visualizes tax levy data for eight Oak Park taxing agencies:
+This repository scrapes, extracts, and visualizes tax levy data for six Oak Park taxing agencies:
 - Oak Park Township (including General Assistance and Mental Health District)
 - Village of Oak Park
 - Village Library Fund
