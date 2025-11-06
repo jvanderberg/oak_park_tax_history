@@ -119,3 +119,118 @@ plt.rcParams['figure.facecolor'] = 'white'
 - All amounts in dollars
 - Tax rates as percentages
 - High School 200 values are Oak Park's adjusted portion only
+
+## Interactive Dashboard Design
+
+### Technology Stack
+- **Frontend**: React with Vite
+- **Charts**: Plotly.js for interactive visualizations
+- **Styling**: Tailwind CSS v3
+- **Data**: Embedded JavaScript (no backend needed)
+
+### File Structure
+```
+tax-dashboard/
+├── index.html              # Page title and favicon
+├── src/
+│   ├── App.jsx            # Main dashboard component
+│   ├── data.js            # Embedded tax data and constants
+│   ├── index.css          # Tailwind imports
+│   └── main.jsx           # React entry point
+├── tailwind.config.js     # Tailwind configuration
+└── package.json           # Dependencies
+```
+
+### Data Processing Rules
+
+**Township Consolidation**: General Assistance and Mental Health District are rolled up into Oak Park Township
+- Combine all three agencies by year before filtering
+- Display as single "Oak Park Township" in all charts
+- Exclude "General Assistance" and "Mental Health District" from agency selector
+
+### Chart Types
+
+**1. Line Chart** (default)
+- Multi-select agencies with color-coded lines
+- Year range sliders (2006-2023)
+- Inflation adjustment toggle (converts to 2006 dollars)
+- Grand Total mode: shows single line summing all selected agencies
+
+**2. Stacked Bar Chart**
+- Shows composition over time
+- Same filters as line chart
+- Grand Total mode: single bar per year showing total
+
+**3. Growth Comparison**
+- Bars show total growth from 2006-2023
+- Sorted by growth percentage (lowest to highest)
+- CPI inflation reference line
+- Tooltips show both total growth and annual growth (CAGR)
+- Inflation adjustment disabled for this chart type
+- Grand Total mode: single bar with combined growth
+
+**4. Yearly Breakdown** (pie chart)
+- Single year selector (slider from 2006-2023, defaults to 2023)
+- Title updates to show selected year
+- Shows percentage composition for that year
+- Grand Total disabled for pie charts
+
+### UI Layout
+
+**Header**
+- Title: "Oak Park Tax Explorer" (centered)
+- Subtitle: "Interactive analysis of tax levies (2006-2023)"
+- Background: Blue (#2563eb)
+- Favicon: 📊 chart emoji
+
+**Left Sidebar (Filters)**
+- Chart Type dropdown
+- Year Range sliders (or single year for pie chart)
+- Inflation adjustment checkbox (disabled for growth comparison)
+- Grand Total checkbox (disabled for pie chart)
+- Agency checkboxes with color indicators
+
+**Main Content Area**
+- Summary Stats (4 cards in 10-column grid):
+  - Latest Year Total: 3 columns (30%)
+  - Total Growth: 3 columns (30%)
+  - Annual Growth: 2 columns (20%)
+  - CPI Inflation: 2 columns (20%)
+- Chart container (white background, shadow, padding)
+
+### Color Scheme
+```javascript
+agencyColors = {
+  "Oak Park Township": "#E74C3C",      // Red
+  "Village of Oak Park": "#3498DB",    // Blue
+  "Village Library Fund": "#7F8C8D",   // Gray
+  "School District 97": "#F39C12",     // Orange
+  "High School 200": "#9B59B6",        // Purple
+  "Park District": "#27AE60",          // Green
+  "General Assistance": "#E67E22",     // Dark Orange (rolled up)
+  "Mental Health District": "#16A085"  // Teal (rolled up)
+}
+```
+
+### Key Features
+- **Responsive**: Works on desktop and mobile
+- **Interactive**: Plotly zoom, pan, hover tooltips
+- **Fast**: All data embedded, no API calls
+- **Stateless**: All filters in React state, no persistence needed
+- **Self-contained**: Single HTML file build output
+
+### Development Commands
+```bash
+npm install              # Install dependencies
+npm run dev             # Start dev server (http://localhost:5173)
+npm run build           # Build for production (dist/ folder)
+```
+
+### Deployment
+Build creates static files that can be hosted anywhere:
+- GitHub Pages
+- Netlify
+- Vercel
+- Any static file server
+
+No backend or database required.
