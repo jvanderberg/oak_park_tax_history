@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "gh-pages -d dist"
+    "deploy": "npm run build && rm -rf ../docs && cp -r dist ../docs && cd .. && git add docs/ && git commit -m 'Update dashboard' && git push"
   },
   "dependencies": {
     "plotly.js": "^3.2.0",
