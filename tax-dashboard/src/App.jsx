@@ -139,18 +139,22 @@ function App() {
     } else if (chartType === 'bar') {
       if (showGrandTotal) {
         // Show single grand total bar for growth
-        let total2006 = 0;
-        let total2023 = 0;
+        const [startYear, endYear] = yearRange;
+        let totalStart = 0;
+        let totalEnd = 0;
 
         filteredData.forEach(d => {
-          if (d.year === 2006) total2006 += d.adjustedAmount;
-          if (d.year === 2023) total2023 += d.adjustedAmount;
+          if (d.year === startYear) totalStart += d.adjustedAmount;
+          if (d.year === endYear) totalEnd += d.adjustedAmount;
         });
 
-        const growth = ((total2023 - total2006) / total2006 * 100);
-        const cagr = (Math.pow(total2023 / total2006, 1 / 17) - 1) * 100; // 17 years from 2006 to 2023
-        const cpiGrowth = (cumulativeInflation[2023] - 1) * 100;
-        const cpiCAGR = (Math.pow(cumulativeInflation[2023], 1 / 17) - 1) * 100;
+        const growth = ((totalEnd - totalStart) / totalStart * 100);
+        const yearDiff = endYear - startYear;
+        const cagr = yearDiff > 0 ? (Math.pow(totalEnd / totalStart, 1 / yearDiff) - 1) * 100 : 0;
+        const cpiStart = cumulativeInflation[startYear];
+        const cpiEnd = cumulativeInflation[endYear];
+        const cpiGrowth = ((cpiEnd / cpiStart) - 1) * 100;
+        const cpiCAGR = yearDiff > 0 ? (Math.pow(cpiEnd / cpiStart, 1 / yearDiff) - 1) * 100 : 0;
 
         return [
           {
@@ -176,21 +180,23 @@ function App() {
           }
         ];
       } else {
-        // Show 2023 vs 2006 growth
-        const agencies2006 = {};
-        const agencies2023 = {};
+        // Show growth between selected year range
+        const [startYear, endYear] = yearRange;
+        const agenciesStart = {};
+        const agenciesEnd = {};
 
         filteredData.forEach(d => {
-          if (d.year === 2006) agencies2006[d.displayName] = d.adjustedAmount;
-          if (d.year === 2023) agencies2023[d.displayName] = d.adjustedAmount;
+          if (d.year === startYear) agenciesStart[d.displayName] = d.adjustedAmount;
+          if (d.year === endYear) agenciesEnd[d.displayName] = d.adjustedAmount;
         });
 
         // Create array of [agency, growth, cagr] and sort by growth
-        const agencyGrowth = Object.keys(agencies2023).map(a => {
-          const start = agencies2006[a] || agencies2023[a];
-          const end = agencies2023[a];
+        const agencyGrowth = Object.keys(agenciesEnd).map(a => {
+          const start = agenciesStart[a] || agenciesEnd[a];
+          const end = agenciesEnd[a];
           const growth = ((end - start) / start * 100);
-          const cagr = (Math.pow(end / start, 1 / 17) - 1) * 100;
+          const yearDiff = endYear - startYear;
+          const cagr = yearDiff > 0 ? (Math.pow(end / start, 1 / yearDiff) - 1) * 100 : 0;
           return { agency: a, growth, cagr };
         }).sort((a, b) => a.growth - b.growth);
 
@@ -198,9 +204,12 @@ function App() {
         const growth = agencyGrowth.map(d => d.growth);
         const cagr = agencyGrowth.map(d => d.cagr);
 
-        // Calculate CPI growth
-        const cpiGrowth = (cumulativeInflation[2023] - 1) * 100;
-        const cpiCAGR = (Math.pow(cumulativeInflation[2023], 1 / 17) - 1) * 100;
+        // Calculate CPI growth for the selected range
+        const cpiStart = cumulativeInflation[startYear];
+        const cpiEnd = cumulativeInflation[endYear];
+        const cpiGrowth = ((cpiEnd / cpiStart) - 1) * 100;
+        const yearDiff = endYear - startYear;
+        const cpiCAGR = yearDiff > 0 ? (Math.pow(cpiEnd / cpiStart, 1 / yearDiff) - 1) * 100 : 0;
 
         return [
           {
