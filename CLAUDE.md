@@ -213,24 +213,82 @@ agencyColors = {
 ```
 
 ### Key Features
-- **Responsive**: Works on desktop and mobile
-- **Interactive**: Plotly zoom, pan, hover tooltips
-- **Fast**: All data embedded, no API calls
-- **Stateless**: All filters in React state, no persistence needed
-- **Self-contained**: Single HTML file build output
+
+**Interactivity**
+- Plotly hover tooltips show exact values
+- No drag/zoom (disabled for cleaner UX)
+- Checkbox filters for agencies
+- Dual-handle year range slider
+- Chart type selector
+- Grand Total toggle
+
+**Responsiveness**
+- CSS media queries for mobile/desktop layouts
+- Legends horizontal below chart on mobile, vertical on desktop
+- Smaller fonts and padding on mobile
+- Chart height: 400px mobile, 600px desktop
+- Summary cards adapt to 2-column on mobile, 10-column on desktop
+
+**State Persistence**
+- localStorage saves all UI state:
+  - Selected agencies
+  - Year range
+  - Chart type
+  - Inflation adjustment
+  - Grand total toggle
+  - Pie chart year
+- Persists across browser sessions
+- Defaults: All agencies, 2006-2023, line chart, no inflation/grand total
+
+**Info Modal**
+- ? button in header (top-right)
+- Explains purpose in plain language
+- Describes each agency's responsibilities
+- Clarifies D200 proration calculation
+- Explains inflation adjustment with real example ($100 in 2006 = $151 in 2023)
+- Credits Cook County Clerk and BLS CPI as data sources
+- Instructions for using the dashboard
 
 ### Development Commands
 ```bash
 npm install              # Install dependencies
 npm run dev             # Start dev server (http://localhost:5173)
 npm run build           # Build for production (dist/ folder)
+npm run deploy          # Build, update docs/, commit, and push to GitHub
 ```
 
-### Deployment
-Build creates static files that can be hosted anywhere:
-- GitHub Pages
-- Netlify
-- Vercel
-- Any static file server
+### Deployment Process
 
-No backend or database required.
+**Automated (Recommended)**
+```bash
+./setup_and_run.sh           # Updates tax_data.csv AND dashboard data
+cd tax-dashboard
+npm run deploy               # Builds and deploys to GitHub Pages
+```
+
+**Manual Steps**
+1. Update data: `python3 convert_to_js.py tax_data.csv > tax-dashboard/src/data.js`
+2. Build: `cd tax-dashboard && npm run build`
+3. Deploy: `rm -rf ../docs && cp -r dist ../docs`
+4. Commit: `git add docs/ && git commit -m "Update dashboard" && git push`
+
+**GitHub Pages Setup**
+- Repository Settings → Pages
+- Source: Deploy from a branch
+- Branch: main, folder: /docs
+- Live URL: https://jvanderberg.github.io/oak_park_tax_history/
+
+**Base Path Configuration**
+- `vite.config.js` sets `base: '/oak_park_tax_history/'`
+- Required for GitHub Pages subdirectory deployment
+- Change if deploying to custom domain
+
+### Data Validation
+
+Scraped data validated against manually collected data (jvanderberg/oakparktaxdata):
+- **144 comparisons** (8 agencies × 18 years)
+- **96.5% perfect match** (levy, rate, EAV all identical)
+- **3 minor discrepancies** (< 0.03% difference, likely rounding)
+- **D200 rate differences expected** (proration calculation)
+
+Validation confirms automated scraping is highly accurate and reliable.

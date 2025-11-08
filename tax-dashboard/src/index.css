@@ -1,3 +1,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  .chart-height {
+    height: 400px;
+  }
+
+  @media (min-width: 768px) {
+    .chart-height {
+      height: 600px;
+    }
+  }
+}

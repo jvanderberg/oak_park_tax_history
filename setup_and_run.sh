@@ -44,6 +44,14 @@ echo "Running complete analysis pipeline..."
 echo "======================================================================"
 python3 generate_all.py
 
+# Update dashboard data
+echo ""
+echo "======================================================================"
+echo "Updating interactive dashboard data..."
+echo "======================================================================"
+python3 convert_to_js.py tax_data.csv > tax-dashboard/src/data.js
+echo "✓ Dashboard data updated"
+
 # Deactivate virtual environment
 
 
@@ -58,6 +66,10 @@ echo "  - oak_park_levy_by_year.png"
 echo "  - oak_park_total_increase_real_inflation.png"
 echo "  - oak_park_levy_breakdown.png"
 echo "  - oak_park_levy_stacked.png"
+echo "  - tax-dashboard/src/data.js (dashboard data)"
+echo ""
+echo "To deploy the updated dashboard:"
+echo "  cd tax-dashboard && npm run deploy"
 echo ""
 echo "To re-run analysis in the future, you can either:"
 echo "  1. Run this script again: ./setup_and_run.sh"

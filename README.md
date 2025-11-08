@@ -2,6 +2,17 @@
 
 Automated analysis of Oak Park, Illinois tax levy data from the Cook County Clerk's office (2006-2023).
 
+## 🌐 Interactive Dashboard
+
+**Explore the data online:** [Oak Park Tax Explorer](https://jvanderberg.github.io/oak_park_tax_history/)
+
+The interactive dashboard lets you:
+- Compare different agencies over time
+- Adjust for inflation to see real purchasing power
+- Filter by year range
+- View data as line charts, stacked bars, growth comparisons, or yearly breakdowns
+- Hover over charts for exact numbers
+
 ## Overview
 
 This repository scrapes, extracts, and visualizes tax levy data for six Oak Park taxing agencies:
@@ -198,14 +209,40 @@ Charts use consistent, distinct colors:
 
 To update with latest year's data:
 
-1. Run the scraper (automatically downloads current year if available):
+### Automatic Update (Recommended)
+
+Run the setup script which updates everything including the dashboard:
+```bash
+./setup_and_run.sh
+```
+
+Then deploy the updated dashboard:
+```bash
+cd tax-dashboard
+npm run deploy
+```
+
+### Manual Update
+
+1. **Download new data** (automatically downloads current year if available):
 ```bash
 python3 scrape_tax_pdfs.py
 ```
 
-2. Re-extract and regenerate:
+2. **Regenerate everything**:
 ```bash
 python3 generate_all.py
+```
+
+3. **Update dashboard data**:
+```bash
+python3 convert_to_js.py tax_data.csv > tax-dashboard/src/data.js
+```
+
+4. **Deploy updated dashboard** (optional):
+```bash
+cd tax-dashboard
+npm run deploy
 ```
 
 The scraper will skip existing files and only download new data.
