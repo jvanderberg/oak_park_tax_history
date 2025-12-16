@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Oak Park Tax Levy Breakdown by Agency (2023)
+Oak Park Tax Levy Breakdown by Agency (Latest Year)
 Generates: oak_park_levy_breakdown.png
+Year determined dynamically from tax_data.csv
 """
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -37,12 +38,13 @@ df = pd.read_csv('tax_data.csv')
 df['year'] = pd.to_numeric(df['year'])
 df['tax_amount'] = pd.to_numeric(df['tax_amount'])
 
-# Get 2023 data
-year_2023 = df[df['year'] == 2023]
+# Get latest year data
+latest_year = df['year'].max()
+year_data = df[df['year'] == latest_year]
 
 results = []
 for group_name, agency_codes in agency_groups.items():
-    group_total = year_2023[year_2023['agency_code'].isin(agency_codes)]['tax_amount'].sum()
+    group_total = year_data[year_data['agency_code'].isin(agency_codes)]['tax_amount'].sum()
     results.append({'group': group_name, 'tax_amount': group_total})
 
 chart_df = pd.DataFrame(results).sort_values('tax_amount', ascending=False)
@@ -76,7 +78,7 @@ for text in texts:
     text.set_color('#2c3e50')
 
 # Title
-ax.set_title('Oak Park Tax Levy Breakdown by Agency\n2023',
+ax.set_title(f'Oak Park Tax Levy Breakdown by Agency\n{latest_year}',
              fontsize=28, fontweight='700', color='#2c3e50', pad=30)
 
 plt.tight_layout()

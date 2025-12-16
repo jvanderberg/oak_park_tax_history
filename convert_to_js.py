@@ -42,12 +42,15 @@ inflation_data = {
     2021: 4.7,
     2022: 8.0,      # High inflation
     2023: 4.1,
+    2024: 3.4,      # From Cook County tax report
 }
 
 # Calculate cumulative inflation multiplier for each year
 cumulative = {2006: 1.0}
 multiplier = 1.0
-for year in range(2007, 2024):
+for year in sorted(inflation_data.keys()):
+    if year == 2006:
+        continue  # Base year
     multiplier *= (1 + inflation_data[year] / 100)
     cumulative[year] = multiplier
 
@@ -63,8 +66,12 @@ agency_display_names = {
     'OAK PARK PARK DISTRICT': 'Park District',
 }
 
+# Determine year range from data
+years_in_data = sorted(set(row['year'] for row in data))
+min_year, max_year = years_in_data[0], years_in_data[-1]
+
 # Output JavaScript
-print('// Tax data for Oak Park, IL (2006-2023)')
+print(f'// Tax data for Oak Park, IL ({min_year}-{max_year})')
 print('// Generated from tax_data.csv')
 print()
 print('export const taxData = ' + json.dumps(data, indent=2) + ';')

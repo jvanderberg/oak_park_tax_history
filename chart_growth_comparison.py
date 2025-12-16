@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Oak Park Tax Growth vs. Inflation Comparison (2006-2023)
+Oak Park Tax Growth vs. Inflation Comparison
 Generates: oak_park_total_increase_real_inflation.png
+Year range determined dynamically from tax_data.csv
 """
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -43,16 +44,25 @@ inflation_rates = {
     2006: 3.2, 2007: 2.8, 2008: 3.8, 2009: -0.4, 2010: 1.6,
     2011: 3.2, 2012: 2.1, 2013: 1.5, 2014: 1.6, 2015: 0.1,
     2016: 1.3, 2017: 2.1, 2018: 2.4, 2019: 1.8, 2020: 1.2,
-    2021: 4.7, 2022: 8.0, 2023: 4.1
+    2021: 4.7, 2022: 8.0, 2023: 4.1, 2024: 3.4
 }
 
-cumulative_inflation = 1.0
-for year in range(2007, 2024):
-    cumulative_inflation *= (1 + inflation_rates[year] / 100)
-cumulative_inflation_pct = (cumulative_inflation - 1) * 100
+# Dynamically determine the year range from the data
+all_years = sorted(df['year'].unique())
+baseline_year = all_years[0]
+end_year = all_years[-1]
 
-baseline_year = 2006
-end_year = 2023
+# Check for missing inflation data
+missing_inflation = [y for y in range(baseline_year + 1, end_year + 1) if y not in inflation_rates]
+if missing_inflation:
+    print(f"WARNING: Missing inflation data for years: {missing_inflation}")
+    print("         Growth comparison chart may be inaccurate.")
+
+cumulative_inflation = 1.0
+for year in range(baseline_year + 1, end_year + 1):
+    if year in inflation_rates:
+        cumulative_inflation *= (1 + inflation_rates[year] / 100)
+cumulative_inflation_pct = (cumulative_inflation - 1) * 100
 years_elapsed = end_year - baseline_year
 
 summary_data = []
@@ -109,8 +119,8 @@ ax.axvline(x=cumulative_inflation_pct, color='#e74c3c', linestyle='--',
            linewidth=3, alpha=0.7, label=f'Inflation: {cumulative_inflation_pct:.1f}%')
 
 # Styling
-ax.set_xlabel('Cumulative Growth (2006-2023)', fontsize=16, fontweight='600', color='#2c3e50')
-ax.set_title('Tax Levy Growth vs. Inflation\nCumulative % Increase & Annual Growth Rate (CAGR)',
+ax.set_xlabel(f'Cumulative Growth ({baseline_year}-{end_year})', fontsize=16, fontweight='600', color='#2c3e50')
+ax.set_title(f'Tax Levy Growth vs. Inflation\nCumulative % Increase & Annual Growth Rate (CAGR) ({baseline_year}-{end_year})',
              fontsize=20, fontweight='700', color='#2c3e50', pad=20)
 
 # Legend

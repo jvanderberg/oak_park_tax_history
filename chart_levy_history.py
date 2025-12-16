@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Oak Park Tax Levy Historical Trends (2006-2023)
+Oak Park Tax Levy Historical Trends
 Generates: oak_park_levy_by_year.png
+Year range determined dynamically from tax_data.csv
 """
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -59,10 +60,14 @@ for column in pivot_df.columns:
             marker='o', linewidth=3.5, label=column,
             color=COLORS[column], markersize=7, markeredgewidth=0, alpha=0.9)
 
+# Get year range from data
+min_year = pivot_df.index.min()
+max_year = pivot_df.index.max()
+
 # Styling
 ax.set_xlabel('Year', fontsize=22, fontweight='600', color='#2c3e50')
 ax.set_ylabel('Tax Levy (Millions $)', fontsize=22, fontweight='600', color='#2c3e50')
-ax.set_title('Oak Park Tax Levy Trends by Agency\n2006-2023',
+ax.set_title(f'Oak Park Tax Levy Trends by Agency\n{min_year}-{max_year}',
              fontsize=28, fontweight='700', color='#2c3e50', pad=20)
 
 # Legend

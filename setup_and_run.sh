@@ -52,8 +52,15 @@ echo "======================================================================"
 python3 convert_to_js.py tax_data.csv > tax-dashboard/src/data.js
 echo "✓ Dashboard data updated"
 
-# Deactivate virtual environment
-
+# Install dashboard dependencies if needed
+if [ -d "tax-dashboard" ]; then
+    echo ""
+    echo "======================================================================"
+    echo "Installing dashboard dependencies..."
+    echo "======================================================================"
+    cd tax-dashboard && npm install && cd ..
+    echo "✓ Dashboard dependencies installed"
+fi
 
 echo ""
 echo "======================================================================"

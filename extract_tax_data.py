@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
 Extract tax data from PDF reports and generate CSV
+
+Supports two formats:
+- 2023 and earlier: Simple format with "TAX EXTENSION GRAND TOTAL"
+- 2024 and later: Tabular format with "EXTENSION" column and fund-level subtotals
 """
 import re
 import csv
@@ -20,12 +24,113 @@ def extract_text_from_pdf(pdf_path):
         print(f"Error reading {pdf_path}: {e}")
         return None
 
-def parse_pdf_data(pdf_path):
-    """Extract relevant data from a tax report PDF"""
-    text = extract_text_from_pdf(pdf_path)
-    if not text:
+
+def is_2024_format(text):
+    """Detect if PDF uses the 2024+ tabular format"""
+    # 2024 format has "FUNDS TOTALS" rows and dollar amounts in EXTENSION column
+    return 'FUNDS TOTALS' in text and re.search(r'\$[\d,]+\.\d{2}', text)
+
+
+def parse_2024_format(pdf_path, text):
+    """
+    Parse 2024+ tabular format PDFs.
+
+    Returns a list of records - one per fund type for consolidated files.
+    This allows us to extract Library from Village file and GA/Mental Health from Township.
+    """
+    records = []
+
+    # Extract year
+    year_match = re.search(r'TAX YEAR\s+(\d{4})', text)
+    year = year_match.group(1) if year_match else None
+
+    # Extract agency code and name from "TAX YEAR 2024 02-0180-000 TOWN OAK PARK"
+    agency_match = re.search(r'TAX YEAR\s+\d{4}\s+([\d-]+)\s+(.+?)(?:\n|CPI|Home)', text)
+    if not agency_match:
         return None
 
+    base_agency_code = agency_match.group(1).strip()
+    base_agency_name = re.sub(r'\s+', ' ', agency_match.group(2).strip())
+
+    # Extract TotalEAV from header "TotalEAV 2,353,827,289"
+    eav_match = re.search(r'TotalEAV\s+([\d,]+)', text)
+    eav_total = eav_match.group(1).replace(',', '') if eav_match else None
+
+    # Define fund mappings for consolidated files
+    # Maps fund label (appears AFTER numbers in 2024 format) -> (agency_code, agency_name)
+    # The PDF text format is: "3,699,694 0.157177 ... $3,699,675.12 CORPORATE  FUNDS TOTALS"
+    fund_mappings = {
+        '03-0920-000': {  # Village file
+            'CORPORATE': ('03-0920-000', 'VILLAGE OF OAK PARK'),
+            'LIBRARY FUND': ('03-0920-001', 'VILLAGE OF OAK PARK LIBRARY FUND'),
+        },
+        '02-0180-000': {  # Township file
+            'CORPORATE': ('02-0180-000', 'TOWN OAK PARK'),
+            'GENERAL ASSISTANCE': ('02-0180-002', 'GENERAL ASSISTANCE OAK PARK'),
+            'MENTAL HEALTH': ('02-0180-004', 'OAK PARK MENTAL HEALTH DISTRICT'),
+        },
+    }
+
+    # Check if this is a consolidated file we need to split
+    if base_agency_code in fund_mappings:
+        mappings = fund_mappings[base_agency_code]
+
+        for fund_label, (agency_code, agency_name) in mappings.items():
+            # Extract extension amount and rate for this fund
+            # 2024 format has numbers BEFORE the label:
+            # "3,699,694 0.157177 3,699,694 3,699,694 3,699,694 0.157177 $3,699,675.12 CORPORATE  FUNDS TOTALS"
+            # We want: rate (0.157177) and extension amount ($3,699,675.12)
+            # Pattern: numbers rate numbers numbers numbers rate $amount LABEL  FUNDS TOTALS
+            pattern = rf'[\d,]+\s+([\d.]+)\s+[\d,]+\s+[\d,]+\s+[\d,]+\s+([\d.]+)\s+\$([\d,]+\.\d+)\s+{re.escape(fund_label)}\s+FUNDS TOTALS'
+            match = re.search(pattern, text)
+
+            if not match:
+                print(f"  Warning: Could not find {fund_label} FUNDS TOTALS in {pdf_path.name}")
+                continue
+
+            tax_rate = match.group(2)
+            tax_amount = match.group(3).replace(',', '')
+
+            records.append({
+                'filename': pdf_path.name,
+                'year': year,
+                'agency_code': agency_code,
+                'agency_name': agency_name,
+                'eav_total': eav_total,
+                'tax_amount': tax_amount,
+                'tax_rate': tax_rate
+            })
+    else:
+        # Non-consolidated file (D97, D200, Park District) - extract AGENCY GRAND TOTALS
+        # Pattern: "AGENCY GRAND TOTALS 6,380,738 0.271079 ... $6,380,731.48"
+        pattern = r'AGENCY GRAND TOTALS\s+[\d,]+\s+([\d.]+)\s+[\d,]+\s+[\d,]+\s+[\d,]+\s+([\d.]+)\s+\$([\d,]+\.\d+)'
+        match = re.search(pattern, text)
+
+        if match:
+            tax_rate = match.group(2)
+            tax_amount = match.group(3).replace(',', '')
+
+            records.append({
+                'filename': pdf_path.name,
+                'year': year,
+                'agency_code': base_agency_code,
+                'agency_name': base_agency_name,
+                'eav_total': eav_total,
+                'tax_amount': tax_amount,
+                'tax_rate': tax_rate
+            })
+        else:
+            print(f"  Warning: Could not find AGENCY GRAND TOTALS in {pdf_path.name}")
+
+    return records if records else None
+
+
+def parse_legacy_format(pdf_path, text):
+    """
+    Parse pre-2024 format PDFs (2023 and earlier).
+
+    Returns a list with a single record.
+    """
     # Extract year from PDF content (line like "DATE 06/24/24 TAX YEAR 2023")
     year_match = re.search(r'TAX YEAR\s+(\d{4})', text)
     year_from_pdf = year_match.group(1) if year_match else None
@@ -82,7 +187,25 @@ def parse_pdf_data(pdf_path):
     if tax_extension_match:
         data['tax_amount'] = tax_extension_match.group(1).replace(',', '')
 
-    return data
+    return [data]
+
+
+def parse_pdf_data(pdf_path):
+    """
+    Extract relevant data from a tax report PDF.
+
+    Returns a list of records (multiple for consolidated 2024+ files).
+    """
+    text = extract_text_from_pdf(pdf_path)
+    if not text:
+        return None
+
+    # Detect format and use appropriate parser
+    if is_2024_format(text):
+        print(f"  Using 2024+ format parser")
+        return parse_2024_format(pdf_path, text)
+    else:
+        return parse_legacy_format(pdf_path, text)
 
 def main():
     # Find all PDF files
@@ -97,14 +220,24 @@ def main():
 
     for pdf_file in pdf_files:
         print(f"Processing {pdf_file}...")
-        data = parse_pdf_data(pdf_file)
+        records = parse_pdf_data(pdf_file)
 
-        if data and all([data['agency_code'], data['agency_name'], data['eav_total'],
-                        data['tax_amount'], data['tax_rate']]):
-            all_data.append(data)
+        if records:
+            valid_records = 0
+            for data in records:
+                if all([data.get('agency_code'), data.get('agency_name'), data.get('eav_total'),
+                        data.get('tax_amount'), data.get('tax_rate')]):
+                    all_data.append(data)
+                    valid_records += 1
+                else:
+                    print(f"  Warning: Incomplete record: {data}")
+            if valid_records == 0:
+                errors.append(pdf_file)
+            else:
+                print(f"  Extracted {valid_records} record(s)")
         else:
             errors.append(pdf_file)
-            print(f"  Warning: Could not extract all data from {pdf_file}")
+            print(f"  Warning: Could not extract any data from {pdf_file}")
 
     # Adjust High School District 200 (04-2020-000) levy based on Oak Park's share of EAV
     # D200 serves multiple communities, so we need to prorate by Oak Park's EAV

@@ -4,8 +4,6 @@ Scrape tax PDFs from Cook County Clerk API
 Default: Downloads PDFs from 2006 to current year
 """
 import requests
-import json
-import os
 import sys
 from pathlib import Path
 from datetime import datetime

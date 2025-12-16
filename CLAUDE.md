@@ -33,10 +33,10 @@ Oak Park agencies tracked:
 
 ### Inflation Calculations
 Use actual historical CPI data, not flat estimates:
-- Historical inflation rates by year (2006-2023)
+- Historical inflation rates by year (2006-present)
 - 2009: -0.4% (deflation)
 - 2022: 8.0% (high inflation)
-- Cumulative 2006-2023: 50.8%
+- Cumulative inflation calculated dynamically from data
 
 ### CAGR Formula
 Compound Annual Growth Rate: `(Final/Initial)^(1/years) - 1`
@@ -83,7 +83,7 @@ plt.rcParams['figure.facecolor'] = 'white'
 - `chart_levy_breakdown.py` - Pie chart of 2023 percentages
 
 ### Data Files
-- `tax_data.csv` - Extracted data (144 rows: 8 agencies × 18 years)
+- `tax_data.csv` - Extracted data (8 agencies × years available)
 - `tax_pdfs/YYYY/*.pdf` - Downloaded PDFs organized by year
 
 ## Common Errors and Fixes
@@ -115,7 +115,7 @@ plt.rcParams['figure.facecolor'] = 'white'
 ## Data Quality Notes
 
 - Years 1999-2005: No data available
-- Years 2006-2023: Complete data (18 years)
+- Years 2006-present: Complete data
 - All amounts in dollars
 - Tax rates as percentages
 - High School 200 values are Oak Park's adjusted portion only
@@ -152,7 +152,7 @@ tax-dashboard/
 
 **1. Line Chart** (default)
 - Multi-select agencies with color-coded lines
-- Year range sliders (2006-2023)
+- Year range sliders (dynamically set from data)
 - Inflation adjustment toggle (converts to 2006 dollars)
 - Grand Total mode: shows single line summing all selected agencies
 
@@ -162,7 +162,7 @@ tax-dashboard/
 - Grand Total mode: single bar per year showing total
 
 **3. Growth Comparison**
-- Bars show total growth from 2006-2023
+- Bars show total growth from baseline to latest year
 - Sorted by growth percentage (lowest to highest)
 - CPI inflation reference line
 - Tooltips show both total growth and annual growth (CAGR)
@@ -170,7 +170,7 @@ tax-dashboard/
 - Grand Total mode: single bar with combined growth
 
 **4. Yearly Breakdown** (pie chart)
-- Single year selector (slider from 2006-2023, defaults to 2023)
+- Single year selector (slider defaults to latest year)
 - Title updates to show selected year
 - Shows percentage composition for that year
 - Grand Total disabled for pie charts
@@ -179,7 +179,7 @@ tax-dashboard/
 
 **Header**
 - Title: "Oak Park Tax Explorer" (centered)
-- Subtitle: "Interactive analysis of tax levies (2006-2023)"
+- Subtitle: "Interactive analysis of tax levies (2006-present)"
 - Background: Blue (#2563eb)
 - Favicon: 📊 chart emoji
 
@@ -238,7 +238,7 @@ agencyColors = {
   - Grand total toggle
   - Pie chart year
 - Persists across browser sessions
-- Defaults: All agencies, 2006-2023, line chart, no inflation/grand total
+- Defaults: All agencies, full year range, line chart, no inflation/grand total
 
 **Info Modal**
 - ? button in header (top-right)
@@ -261,16 +261,17 @@ npm run deploy          # Build, update docs/, commit, and push to GitHub
 
 **Automated (Recommended)**
 ```bash
-./setup_and_run.sh           # Updates tax_data.csv AND dashboard data
+./setup_and_run.sh           # Updates tax_data.csv, dashboard data, AND installs npm dependencies
 cd tax-dashboard
 npm run deploy               # Builds and deploys to GitHub Pages
 ```
 
 **Manual Steps**
 1. Update data: `python3 convert_to_js.py tax_data.csv > tax-dashboard/src/data.js`
-2. Build: `cd tax-dashboard && npm run build`
-3. Deploy: `rm -rf ../docs && cp -r dist ../docs`
-4. Commit: `git add docs/ && git commit -m "Update dashboard" && git push`
+2. Install deps (if needed): `cd tax-dashboard && npm install`
+3. Build: `npm run build`
+4. Deploy: `rm -rf ../docs && cp -r dist ../docs`
+5. Commit: `cd .. && git add docs/ && git commit -m "Update dashboard" && git push`
 
 **GitHub Pages Setup**
 - Repository Settings → Pages
@@ -286,7 +287,7 @@ npm run deploy               # Builds and deploys to GitHub Pages
 ### Data Validation
 
 Scraped data validated against manually collected data (jvanderberg/oakparktaxdata):
-- **144 comparisons** (8 agencies × 18 years)
+- **Validated against manually collected data**
 - **96.5% perfect match** (levy, rate, EAV all identical)
 - **3 minor discrepancies** (< 0.03% difference, likely rounding)
 - **D200 rate differences expected** (proration calculation)

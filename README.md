@@ -1,6 +1,6 @@
 # Oak Park Tax Data Analysis
 
-Automated analysis of Oak Park, Illinois tax levy data from the Cook County Clerk's office (2006-2023).
+Automated analysis of Oak Park, Illinois tax levy data from the Cook County Clerk's office (2006-present).
 
 ## 🌐 Interactive Dashboard
 
@@ -34,7 +34,7 @@ This repository scrapes, extracts, and visualizes tax levy data for six Oak Park
 ### Growth vs Inflation
 ![Growth Comparison](oak_park_total_increase_real_inflation.png)
 
-### 2023 Breakdown
+### Latest Year Breakdown
 ![Breakdown Chart](oak_park_levy_breakdown.png)
 
 ## Quick Start
@@ -87,7 +87,7 @@ This will create:
 - `tax_data.csv` - Extracted tax data
 - `oak_park_levy_by_year.png` - Historical trends by agency (line chart)
 - `oak_park_total_increase_real_inflation.png` - Growth vs inflation comparison (bar chart)
-- `oak_park_levy_breakdown.png` - 2023 percentage breakdown (pie chart)
+- `oak_park_levy_breakdown.png` - Latest year percentage breakdown (pie chart)
 - `oak_park_levy_stacked.png` - Total levy composition by year (stacked bar chart)
 
 ## Individual Scripts
@@ -134,13 +134,13 @@ Extracts from each PDF:
 Run individual chart scripts:
 
 ```bash
-# Line chart: Historical trends by agency (2006-2023)
+# Line chart: Historical trends by agency
 python3 chart_levy_history.py
 
 # Bar chart: Cumulative growth vs inflation
 python3 chart_growth_comparison.py
 
-# Pie chart: 2023 breakdown by agency
+# Pie chart: Latest year breakdown by agency
 python3 chart_levy_breakdown.py
 
 # Stacked bar chart: Total levy composition by year
@@ -154,7 +154,7 @@ All charts use consistent colors and large, readable fonts.
 ### tax_data.csv
 
 CSV with extracted data. Columns:
-- `year` - Tax year (2006-2023)
+- `year` - Tax year (2006-present)
 - `agency_code` - Cook County agency code
 - `agency_name` - Full agency name
 - `eav_total` - Total Equalized Assessed Value
@@ -190,10 +190,10 @@ High School District 200 serves multiple communities. The extraction script auto
 
 ### Inflation Data
 
-Growth comparison uses actual historical CPI inflation rates (2006-2023), including:
+Growth comparison uses actual historical CPI inflation rates, including:
 - 2009: -0.4% (deflation)
 - 2022: 8.0% (high inflation)
-- Cumulative 2006-2023: 50.8%
+- Inflation data updated as new years are added
 
 ### Color Palette
 
@@ -215,6 +215,8 @@ Run the setup script which updates everything including the dashboard:
 ```bash
 ./setup_and_run.sh
 ```
+
+This script downloads PDFs, extracts data, generates charts, updates dashboard data, and installs npm dependencies.
 
 Then deploy the updated dashboard:
 ```bash
@@ -242,6 +244,7 @@ python3 convert_to_js.py tax_data.csv > tax-dashboard/src/data.js
 4. **Deploy updated dashboard** (optional):
 ```bash
 cd tax-dashboard
+npm install   # if dependencies not yet installed
 npm run deploy
 ```
 

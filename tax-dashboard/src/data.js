@@ -1,4 +1,4 @@
-// Tax data for Oak Park, IL (2006-2023)
+// Tax data for Oak Park, IL (2006-2024)
 // Generated from tax_data.csv
 
 export const taxData = [
@@ -1153,6 +1153,70 @@ export const taxData = [
     "eavTotal": 2361857488.0,
     "taxAmount": 12305277.51,
     "taxRate": 0.521
+  },
+  {
+    "year": 2024,
+    "agencyCode": "02-0180-000",
+    "agencyName": "TOWN OAK PARK",
+    "eavTotal": 2353827289.0,
+    "taxAmount": 3699675.12,
+    "taxRate": 0.157177
+  },
+  {
+    "year": 2024,
+    "agencyCode": "02-0180-002",
+    "agencyName": "GENERAL ASSISTANCE OAK PARK",
+    "eavTotal": 2353827289.0,
+    "taxAmount": 805503.24,
+    "taxRate": 0.034221
+  },
+  {
+    "year": 2024,
+    "agencyCode": "02-0180-004",
+    "agencyName": "OAK PARK MENTAL HEALTH DISTRICT",
+    "eavTotal": 2353827289.0,
+    "taxAmount": 1875553.12,
+    "taxRate": 0.079681
+  },
+  {
+    "year": 2024,
+    "agencyCode": "03-0920-000",
+    "agencyName": "VILLAGE OF OAK PARK",
+    "eavTotal": 2353827289.0,
+    "taxAmount": 40123292.9,
+    "taxRate": 1.704598
+  },
+  {
+    "year": 2024,
+    "agencyCode": "03-0920-001",
+    "agencyName": "VILLAGE OF OAK PARK LIBRARY FUND",
+    "eavTotal": 2353827289.0,
+    "taxAmount": 11746116.01,
+    "taxRate": 0.499022
+  },
+  {
+    "year": 2024,
+    "agencyCode": "04-0580-000",
+    "agencyName": "SCHOOL DISTRICT 97",
+    "eavTotal": 2353827289.0,
+    "taxAmount": 103498962.82,
+    "taxRate": 4.39705
+  },
+  {
+    "year": 2024,
+    "agencyCode": "04-2020-000",
+    "agencyName": "CONSOLIDATED HIGH SCHOOL 200",
+    "eavTotal": 2353827289.0,
+    "taxAmount": 63711561.075446755,
+    "taxRate": 2.706722000088374
+  },
+  {
+    "year": 2024,
+    "agencyCode": "05-0760-000",
+    "agencyName": "OAK PARK PARK DISTRICT",
+    "eavTotal": 2353827289.0,
+    "taxAmount": 12841092.93,
+    "taxRate": 0.545541
   }
 ];
 
@@ -1174,7 +1238,8 @@ export const inflationData = {
   "2020": 1.2,
   "2021": 4.7,
   "2022": 8.0,
-  "2023": 4.1
+  "2023": 4.1,
+  "2024": 3.4
 };
 
 export const cumulativeInflation = {
@@ -1195,7 +1260,8 @@ export const cumulativeInflation = {
   "2020": 1.2814634277913857,
   "2021": 1.3416922088975807,
   "2022": 1.4490275856093873,
-  "2023": 1.508437716619372
+  "2023": 1.508437716619372,
+  "2024": 1.5597245989844308
 };
 
 export const agencyDisplayNames = {
