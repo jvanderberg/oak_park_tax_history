@@ -2,7 +2,14 @@ import { useState, useMemo, useEffect } from 'react';
 import Plot from 'react-plotly.js';
 import { taxData, inflationData, cumulativeInflation, agencyDisplayNames, agencyColors } from './data.js';
 
+// Derive year range from data at module level
+const allYears = taxData.map(d => d.year);
+const minYear = Math.min(...allYears);
+const maxYear = Math.max(...allYears);
+const yearSpan = maxYear - minYear;
+
 function App() {
+
   // Get unique agencies with display names (exclude rolled-up agencies)
   const allAgencies = useMemo(() => {
     const uniqueAgencies = [...new Set(taxData.map(d => d.agencyName))];
@@ -31,11 +38,11 @@ function App() {
 
   // State for filters with localStorage persistence
   const [selectedAgencies, setSelectedAgencies] = useState(() => loadState('selectedAgencies', allAgencies));
-  const [yearRange, setYearRange] = useState(() => loadState('yearRange', [2006, 2023]));
+  const [yearRange, setYearRange] = useState(() => loadState('yearRange', [minYear, maxYear]));
   const [inflationAdjusted, setInflationAdjusted] = useState(() => loadState('inflationAdjusted', false));
   const [chartType, setChartType] = useState(() => loadState('chartType', 'line'));
   const [showGrandTotal, setShowGrandTotal] = useState(() => loadState('showGrandTotal', false));
-  const [pieYear, setPieYear] = useState(() => loadState('pieYear', 2023));
+  const [pieYear, setPieYear] = useState(() => loadState('pieYear', maxYear));
   const [showInfoModal, setShowInfoModal] = useState(false);
 
   // Save state to localStorage whenever it changes
@@ -403,7 +410,7 @@ function App() {
       return {
         ...baseLayout,
         title: {
-          text: `Oak Park Tax Levies by Agency (${yearRange[0]}-${yearRange[1]})${inflationAdjusted ? '<br><sub>Inflation-Adjusted to 2006 Dollars</sub>' : ''}`,
+          text: `Oak Park Tax Levies by Agency (${yearRange[0]}-${yearRange[1]})${inflationAdjusted ? `<br><sub>Inflation-Adjusted to ${minYear} Dollars</sub>` : ''}`,
           font: { size: isMobile ? 16 : 24 }
         },
         xaxis: {
@@ -413,7 +420,7 @@ function App() {
           gridcolor: '#e0e0e0'
         },
         yaxis: {
-          title: inflationAdjusted ? 'Tax Amount (2006 Dollars)' : 'Tax Amount ($)',
+          title: inflationAdjusted ? `Tax Amount (${minYear} Dollars)` : 'Tax Amount ($)',
           titlefont: { size: 18 },
           tickfont: { size: 14 },
           tickformat: '$,.0f',
@@ -462,7 +469,7 @@ function App() {
       return {
         ...baseLayout,
         title: {
-          text: `Oak Park Tax Levies by Agency (${yearRange[0]}-${yearRange[1]})${inflationAdjusted ? '<br><sub>Inflation-Adjusted to 2006 Dollars</sub>' : ''}`,
+          text: `Oak Park Tax Levies by Agency (${yearRange[0]}-${yearRange[1]})${inflationAdjusted ? `<br><sub>Inflation-Adjusted to ${minYear} Dollars</sub>` : ''}`,
           font: { size: isMobile ? 16 : 24 }
         },
         xaxis: {
@@ -472,7 +479,7 @@ function App() {
           gridcolor: '#e0e0e0'
         },
         yaxis: {
-          title: inflationAdjusted ? 'Tax Amount (2006 Dollars)' : 'Tax Amount ($)',
+          title: inflationAdjusted ? `Tax Amount (${minYear} Dollars)` : 'Tax Amount ($)',
           titlefont: { size: 18 },
           tickfont: { size: 14 },
           tickformat: '$,.0f',
@@ -556,7 +563,7 @@ function App() {
           <div className="flex items-center justify-center relative">
             <div className="text-center">
               <h1 className="text-2xl md:text-4xl font-bold">Oak Park Tax Explorer</h1>
-              <p className="text-sm md:text-base text-blue-100 mt-1 md:mt-2">Interactive analysis of tax levies (2006-2023)</p>
+              <p className="text-sm md:text-base text-blue-100 mt-1 md:mt-2">Interactive analysis of tax levies ({minYear}-{maxYear})</p>
             </div>
             <button
               onClick={() => setShowInfoModal(true)}
@@ -587,7 +594,7 @@ function App() {
               <div className="space-y-4 text-gray-700">
                 <section>
                   <h3 className="font-bold text-lg mb-2">What is this?</h3>
-                  <p>This tool shows how much Oak Park residents pay in property taxes to different local government agencies from 2006 to 2023. You can see how tax amounts have changed over time and compare them to inflation.</p>
+                  <p>This tool shows how much Oak Park residents pay in property taxes to different local government agencies from {minYear} to {maxYear}. You can see how tax amounts have changed over time and compare them to inflation.</p>
                 </section>
 
                 <section>
@@ -609,7 +616,7 @@ function App() {
 
                 <section>
                   <h3 className="font-bold text-lg mb-2">What is "Inflation Adjustment"?</h3>
-                  <p>When you turn on inflation adjustment, the dollar amounts are converted to "2006 dollars." This helps you see if taxes truly increased or just kept pace with rising prices. For example, $100 in 2006 has the same buying power as about $151 in 2023.</p>
+                  <p>When you turn on inflation adjustment, the dollar amounts are converted to "{minYear} dollars." This helps you see if taxes truly increased or just kept pace with rising prices.</p>
                 </section>
 
                 <section>
@@ -673,8 +680,8 @@ function App() {
                   </label>
                   <input
                     type="range"
-                    min="2006"
-                    max="2023"
+                    min={minYear}
+                    max={maxYear}
                     value={pieYear}
                     onChange={(e) => setPieYear(parseInt(e.target.value))}
                     className="w-full"
@@ -692,15 +699,15 @@ function App() {
                     <div
                       className="absolute h-2 bg-blue-500 rounded top-1"
                       style={{
-                        left: `${((yearRange[0] - 2006) / 17) * 100}%`,
-                        right: `${((2023 - yearRange[1]) / 17) * 100}%`
+                        left: `${((yearRange[0] - minYear) / yearSpan) * 100}%`,
+                        right: `${((maxYear - yearRange[1]) / yearSpan) * 100}%`
                       }}
                     ></div>
                     {/* Start year slider */}
                     <input
                       type="range"
-                      min="2006"
-                      max="2023"
+                      min={minYear}
+                      max={maxYear}
                       value={yearRange[0]}
                       onChange={(e) => {
                         const newStart = parseInt(e.target.value);
@@ -714,8 +721,8 @@ function App() {
                     {/* End year slider */}
                     <input
                       type="range"
-                      min="2006"
-                      max="2023"
+                      min={minYear}
+                      max={maxYear}
                       value={yearRange[1]}
                       onChange={(e) => {
                         const newEnd = parseInt(e.target.value);
@@ -745,7 +752,7 @@ function App() {
                   </span>
                 </label>
                 <p className="text-xs text-gray-500 mt-1">
-                  Show values in 2006 dollars
+                  Show values in {minYear} dollars
                 </p>
               </div>
 
@@ -835,7 +842,7 @@ function App() {
                 <div className="bg-white rounded-lg shadow-md p-3 md:p-4 col-span-1 md:col-span-2">
                   <div className="text-xs md:text-sm text-gray-600 mb-1">CPI Inflation</div>
                   <div className="text-lg md:text-2xl font-bold text-gray-800">50.8%</div>
-                  <div className="text-xs text-gray-500">2006-2023</div>
+                  <div className="text-xs text-gray-500">{minYear}-{maxYear}</div>
                 </div>
               </div>
             )}
