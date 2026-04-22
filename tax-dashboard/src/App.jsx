@@ -8,67 +8,97 @@ const minYear = Math.min(...allYears);
 const maxYear = Math.max(...allYears);
 const yearSpan = maxYear - minYear;
 
+// All selectable agencies (exclude rolled-up ones)
+const allAgencies = new Set(
+  [...new Set(taxData.map(d => d.agencyName))]
+    .map(name => agencyDisplayNames[name] || name)
+    .filter(name => name !== 'General Assistance' && name !== 'Mental Health District')
+);
+
+// Short, readable codes for URL serialization
+const agencyCodes = {
+  'Oak Park Township': 'town',
+  'Village of Oak Park': 'vill',
+  'Village Library Fund': 'lib',
+  'School District 97': 'd97',
+  'High School 200': 'd200',
+  'Park District': 'park',
+};
+const codeToAgency = Object.fromEntries(
+  Object.entries(agencyCodes).map(([k, v]) => [v, k])
+);
+const chartCodes = { line: 'l', stacked: 's', bar: 'g', pie: 'p' };
+const codeToChart = { l: 'line', s: 'stacked', g: 'bar', p: 'pie' };
+
+function parseUrlState() {
+  const params = new URLSearchParams(window.location.search);
+  const state = {
+    chartType: codeToChart[params.get('c')] || 'line',
+    yearRange: [minYear, maxYear],
+    pieYear: maxYear,
+    inflationAdjusted: params.get('i') === '1',
+    showGrandTotal: params.get('t') === '1',
+    selectedAgencies: new Set(allAgencies),
+  };
+  const y = params.get('y');
+  if (y) {
+    const [s, e] = y.split('-').map(Number);
+    if (!isNaN(s) && !isNaN(e)) state.yearRange = [s, e];
+  }
+  const py = params.get('py');
+  if (py) {
+    const n = parseInt(py);
+    if (!isNaN(n)) state.pieYear = n;
+  }
+  const a = params.get('a');
+  if (a !== null) {
+    state.selectedAgencies = new Set(
+      a.split(',').map(c => codeToAgency[c]).filter(Boolean)
+    );
+  }
+  return state;
+}
+
+function buildUrlSearch(state) {
+  // Build manually so commas in `a` stay unescaped for readability
+  const parts = [];
+  if (state.chartType !== 'line') parts.push(`c=${chartCodes[state.chartType]}`);
+  if (state.yearRange[0] !== minYear || state.yearRange[1] !== maxYear) {
+    parts.push(`y=${state.yearRange[0]}-${state.yearRange[1]}`);
+  }
+  if (state.chartType === 'pie' && state.pieYear !== maxYear) {
+    parts.push(`py=${state.pieYear}`);
+  }
+  if (state.inflationAdjusted) parts.push('i=1');
+  if (state.showGrandTotal) parts.push('t=1');
+  if (state.selectedAgencies.size !== allAgencies.size) {
+    const codes = [...state.selectedAgencies].map(a => agencyCodes[a]).filter(Boolean);
+    parts.push(`a=${codes.join(',')}`);
+  }
+  return parts.length ? `?${parts.join('&')}` : '';
+}
+
 function App() {
 
-  // Get unique agencies with display names (exclude rolled-up agencies)
-  const allAgencies = useMemo(() => {
-    const uniqueAgencies = [...new Set(taxData.map(d => d.agencyName))];
-    return new Set(uniqueAgencies
-      .map(name => agencyDisplayNames[name] || name)
-      .filter(name => name !== 'General Assistance' && name !== 'Mental Health District'));
-  }, []);
-
-  // Load state from localStorage with defaults
-  const loadState = (key, defaultValue) => {
-    try {
-      const saved = localStorage.getItem(key);
-      if (saved !== null) {
-        const parsed = JSON.parse(saved);
-        // Special handling for Set objects
-        if (key === 'selectedAgencies' && Array.isArray(parsed)) {
-          return new Set(parsed);
-        }
-        return parsed;
-      }
-    } catch (e) {
-      console.error('Error loading state:', e);
-    }
-    return defaultValue;
-  };
-
-  // State for filters with localStorage persistence
-  const [selectedAgencies, setSelectedAgencies] = useState(() => loadState('selectedAgencies', allAgencies));
-  const [yearRange, setYearRange] = useState(() => loadState('yearRange', [minYear, maxYear]));
-  const [inflationAdjusted, setInflationAdjusted] = useState(() => loadState('inflationAdjusted', false));
-  const [chartType, setChartType] = useState(() => loadState('chartType', 'line'));
-  const [showGrandTotal, setShowGrandTotal] = useState(() => loadState('showGrandTotal', false));
-  const [pieYear, setPieYear] = useState(() => loadState('pieYear', maxYear));
+  // Initialize state from URL query params (computed once)
+  const initial = useMemo(() => parseUrlState(), []);
+  const [selectedAgencies, setSelectedAgencies] = useState(initial.selectedAgencies);
+  const [yearRange, setYearRange] = useState(initial.yearRange);
+  const [inflationAdjusted, setInflationAdjusted] = useState(initial.inflationAdjusted);
+  const [chartType, setChartType] = useState(initial.chartType);
+  const [showGrandTotal, setShowGrandTotal] = useState(initial.showGrandTotal);
+  const [pieYear, setPieYear] = useState(initial.pieYear);
   const [showInfoModal, setShowInfoModal] = useState(false);
 
-  // Save state to localStorage whenever it changes
+  // Sync state to URL (replaceState so browser history isn't flooded)
   useEffect(() => {
-    localStorage.setItem('selectedAgencies', JSON.stringify([...selectedAgencies]));
-  }, [selectedAgencies]);
-
-  useEffect(() => {
-    localStorage.setItem('yearRange', JSON.stringify(yearRange));
-  }, [yearRange]);
-
-  useEffect(() => {
-    localStorage.setItem('inflationAdjusted', JSON.stringify(inflationAdjusted));
-  }, [inflationAdjusted]);
-
-  useEffect(() => {
-    localStorage.setItem('chartType', JSON.stringify(chartType));
-  }, [chartType]);
-
-  useEffect(() => {
-    localStorage.setItem('showGrandTotal', JSON.stringify(showGrandTotal));
-  }, [showGrandTotal]);
-
-  useEffect(() => {
-    localStorage.setItem('pieYear', JSON.stringify(pieYear));
-  }, [pieYear]);
+    const search = buildUrlSearch({
+      selectedAgencies, yearRange, inflationAdjusted,
+      chartType, showGrandTotal, pieYear,
+    });
+    const newUrl = window.location.pathname + search + window.location.hash;
+    window.history.replaceState(null, '', newUrl);
+  }, [selectedAgencies, yearRange, inflationAdjusted, chartType, showGrandTotal, pieYear]);
 
   // Turn off inflation adjustment when switching to growth comparison
   useEffect(() => {
