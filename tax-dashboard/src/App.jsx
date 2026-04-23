@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import Plot from 'react-plotly.js';
-import { taxData, inflationData, cumulativeInflation, agencyDisplayNames, agencyColors } from './data.js';
+import { taxData, inflationData, cumulativeInflation, medianHouseholdIncome, agencyDisplayNames, agencyColors } from './data.js';
 
 // Derive year range from data at module level
 const allYears = taxData.map(d => d.year);
@@ -38,6 +38,7 @@ function parseUrlState() {
     pieYear: maxYear,
     inflationAdjusted: params.get('i') === '1',
     showGrandTotal: params.get('t') === '1',
+    showIncome: params.get('m') === '1',
     selectedAgencies: new Set(allAgencies),
   };
   const y = params.get('y');
@@ -71,6 +72,7 @@ function buildUrlSearch(state) {
   }
   if (state.inflationAdjusted) parts.push('i=1');
   if (state.showGrandTotal) parts.push('t=1');
+  if (state.showIncome) parts.push('m=1');
   if (state.selectedAgencies.size !== allAgencies.size) {
     const codes = [...state.selectedAgencies].map(a => agencyCodes[a]).filter(Boolean);
     parts.push(`a=${codes.join(',')}`);
@@ -88,17 +90,18 @@ function App() {
   const [chartType, setChartType] = useState(initial.chartType);
   const [showGrandTotal, setShowGrandTotal] = useState(initial.showGrandTotal);
   const [pieYear, setPieYear] = useState(initial.pieYear);
+  const [showIncome, setShowIncome] = useState(initial.showIncome);
   const [showInfoModal, setShowInfoModal] = useState(false);
 
   // Sync state to URL (replaceState so browser history isn't flooded)
   useEffect(() => {
     const search = buildUrlSearch({
       selectedAgencies, yearRange, inflationAdjusted,
-      chartType, showGrandTotal, pieYear,
+      chartType, showGrandTotal, pieYear, showIncome,
     });
     const newUrl = window.location.pathname + search + window.location.hash;
     window.history.replaceState(null, '', newUrl);
-  }, [selectedAgencies, yearRange, inflationAdjusted, chartType, showGrandTotal, pieYear]);
+  }, [selectedAgencies, yearRange, inflationAdjusted, chartType, showGrandTotal, pieYear, showIncome]);
 
   // Turn off inflation adjustment when switching to growth comparison
   useEffect(() => {
@@ -178,6 +181,30 @@ function App() {
     }));
   }, [selectedAgencies, yearRange, inflationAdjusted]);
 
+  // Build median household income trace for line chart overlay (secondary y-axis).
+  const incomeTrace = useMemo(() => {
+    const [startYear, endYear] = yearRange;
+    const years = Object.keys(medianHouseholdIncome)
+      .map(Number)
+      .filter(y => y >= startYear && y <= endYear)
+      .sort((a, b) => a - b);
+    const values = years.map(y => {
+      const raw = medianHouseholdIncome[y];
+      return inflationAdjusted ? raw / cumulativeInflation[y] : raw;
+    });
+    return {
+      x: years,
+      y: values,
+      type: 'scatter',
+      mode: 'lines+markers',
+      name: 'Median HH Income',
+      yaxis: 'y2',
+      line: { color: '#111827', width: 2, dash: 'dash' },
+      marker: { size: 6, symbol: 'diamond', color: '#111827' },
+      hovertemplate: '<b>Median HH Income</b><br>%{x}: $%{y:,.0f}<extra></extra>'
+    };
+  }, [yearRange, inflationAdjusted]);
+
   // Prepare data for Plotly
   const plotData = useMemo(() => {
     if (chartType === 'line') {
@@ -194,7 +221,7 @@ function App() {
         const years = Object.keys(totalByYear).map(Number).sort();
         const amounts = years.map(y => totalByYear[y]);
 
-        return [{
+        const traces = [{
           x: years,
           y: amounts,
           type: 'scatter',
@@ -203,6 +230,8 @@ function App() {
           line: { color: '#2C3E50', width: 4 },
           marker: { size: 8 }
         }];
+        if (showIncome) traces.push(incomeTrace);
+        return traces;
       } else {
         // Group by agency
         const byAgency = {};
@@ -214,7 +243,7 @@ function App() {
           byAgency[d.displayName].amounts.push(d.adjustedAmount);
         });
 
-        return Object.entries(byAgency).map(([agency, data]) => ({
+        const traces = Object.entries(byAgency).map(([agency, data]) => ({
           x: data.years,
           y: data.amounts,
           type: 'scatter',
@@ -223,6 +252,8 @@ function App() {
           line: { color: agencyColors[agency], width: 3 },
           marker: { size: 6 }
         }));
+        if (showIncome) traces.push(incomeTrace);
+        return traces;
       }
     } else if (chartType === 'bar') {
       if (showGrandTotal) {
@@ -424,7 +455,7 @@ function App() {
         hovertemplate: '<b>%{label}</b><br>$%{value:,.0f}<br>%{percent}<extra></extra>'
       }];
     }
-  }, [filteredData, chartType, showGrandTotal, pieYear, selectedAgencies]);
+  }, [filteredData, chartType, showGrandTotal, pieYear, selectedAgencies, showIncome, incomeTrace]);
 
   const layout = useMemo(() => {
     const isMobile = window.matchMedia('(max-width: 767px)').matches;
@@ -437,8 +468,12 @@ function App() {
     };
 
     if (chartType === 'line') {
-      return {
+      const layoutObj = {
         ...baseLayout,
+        margin: {
+          ...baseLayout.margin,
+          r: showIncome ? (isMobile ? 50 : 100) : baseLayout.margin.r,
+        },
         title: {
           text: `Oak Park Tax Levies by Agency (${yearRange[0]}-${yearRange[1]})${inflationAdjusted ? `<br><sub>Inflation-Adjusted to ${minYear} Dollars</sub>` : ''}`,
           font: { size: isMobile ? 16 : 24 }
@@ -466,10 +501,22 @@ function App() {
         } : {
           font: { size: 14 },
           orientation: 'v',
-          x: 1.02,
+          x: 1.12,
           y: 1
         }
       };
+      if (showIncome) {
+        layoutObj.yaxis2 = {
+          title: inflationAdjusted ? `Median HH Income (${minYear} Dollars)` : 'Median HH Income ($)',
+          titlefont: { size: 14 },
+          tickfont: { size: 12 },
+          tickformat: '$,.0f',
+          overlaying: 'y',
+          side: 'right',
+          showgrid: false,
+        };
+      }
+      return layoutObj;
     } else if (chartType === 'bar') {
       return {
         ...baseLayout,
@@ -543,7 +590,7 @@ function App() {
         }
       };
     }
-  }, [chartType, yearRange, inflationAdjusted, pieYear]);
+  }, [chartType, yearRange, inflationAdjusted, pieYear, showIncome]);
 
   const toggleAgency = (displayName) => {
     setSelectedAgencies(prev => {
@@ -650,8 +697,13 @@ function App() {
                 </section>
 
                 <section>
+                  <h3 className="font-bold text-lg mb-2">Median Household Income</h3>
+                  <p>On the line chart you can toggle an overlay of Oak Park's median household income on a right-hand axis. Values come from the U.S. Census Bureau's American Community Survey (ACS) — 5-year estimates from 2009 onward, 3-year estimates for 2007-2008, and a linear back-extrapolation for 2006. When inflation adjustment is on, both the levy and income series are expressed in {minYear} dollars.</p>
+                </section>
+
+                <section>
                   <h3 className="font-bold text-lg mb-2">Data Source</h3>
-                  <p>All tax data comes from official reports published by the Cook County Clerk. Inflation rates are from the U.S. Bureau of Labor Statistics Consumer Price Index (CPI).</p>
+                  <p>All tax data comes from official reports published by the Cook County Clerk. Inflation rates are from the U.S. Bureau of Labor Statistics Consumer Price Index (CPI). Income data is from the U.S. Census Bureau's American Community Survey (ACS).</p>
                 </section>
 
                 <section>
@@ -802,6 +854,25 @@ function App() {
                 </label>
                 <p className="text-xs text-gray-500 mt-1">
                   Display combined total of selected agencies
+                </p>
+              </div>
+
+              {/* Median Household Income Toggle */}
+              <div className="mb-6">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showIncome}
+                    onChange={(e) => setShowIncome(e.target.checked)}
+                    disabled={chartType !== 'line'}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 disabled:opacity-50"
+                  />
+                  <span className={`text-sm font-semibold ${chartType !== 'line' ? 'text-gray-400' : 'text-gray-700'}`}>
+                    Show Median Household Income
+                  </span>
+                </label>
+                <p className="text-xs text-gray-500 mt-1">
+                  Overlay ACS income on a right-hand axis (line chart only)
                 </p>
               </div>
 

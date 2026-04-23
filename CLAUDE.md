@@ -8,6 +8,17 @@
   - `/api-tax/public/getreportdata` - Fetch report metadata
   - `/api-tax/public/viewreport` - Download PDF reports
 
+### US Census Bureau ACS API
+- **Base URL**: `https://api.census.gov/data`
+- **Variable**: `B19013_001E` (Median household income, past 12 months)
+- **Geography**: `place:54885` in `state:17` (Oak Park village, Illinois)
+- **Series strategy** (Oak Park is below ACS 1-year's 65k population cutoff):
+  - 2009+: ACS 5-year estimates (`/data/{year}/acs/acs5`), labeled by end year
+  - 2007, 2008: ACS 3-year estimates (`/data/{year}/acs/acs3`, discontinued after 2013)
+  - 2006: linear back-extrapolation using the 2007→2009 slope (2008 alone is
+    recession-distorted, so the two-year slope is the better anchor)
+- Fetcher: `fetch_income_data.py` → `income_data.csv`
+
 ### Agency Codes
 Oak Park agencies tracked:
 - Township: `02-0180-000`, `02-0180-002`, `02-0180-004`
@@ -174,6 +185,12 @@ tax-dashboard/
 - Title updates to show selected year
 - Shows percentage composition for that year
 - Grand Total disabled for pie charts
+
+**Median Household Income overlay** (line chart only)
+- Toggle in sidebar; URL param `m=1`
+- Dashed near-black line with diamond markers on a secondary (right-hand) y-axis
+- When "Adjust for Inflation" is on, income is also divided by `cumulativeInflation[year]` so both series are in base-year dollars
+- Disabled for stacked/growth/pie chart types
 
 ### UI Layout
 

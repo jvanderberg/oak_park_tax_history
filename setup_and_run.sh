@@ -44,6 +44,13 @@ echo "Running complete analysis pipeline..."
 echo "======================================================================"
 python3 generate_all.py
 
+# Fetch latest median household income (ACS) for the dashboard overlay
+echo ""
+echo "======================================================================"
+echo "Fetching ACS median household income..."
+echo "======================================================================"
+python3 fetch_income_data.py || echo "  (skipped — will fall back to prior income_data.csv if present)"
+
 # Update dashboard data
 echo ""
 echo "======================================================================"

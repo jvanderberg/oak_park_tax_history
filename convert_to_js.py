@@ -70,6 +70,14 @@ agency_display_names = {
 years_in_data = sorted(set(row['year'] for row in data))
 min_year, max_year = years_in_data[0], years_in_data[-1]
 
+# Median household income (ACS). Optional — loaded if income_data.csv exists.
+income_data: dict[int, int] = {}
+income_path = 'income_data.csv'
+if os.path.exists(income_path):
+    with open(income_path, 'r') as f:
+        for row in csv.DictReader(f):
+            income_data[int(row['year'])] = int(row['median_household_income'])
+
 # Output JavaScript
 print(f'// Tax data for Oak Park, IL ({min_year}-{max_year})')
 print('// Generated from tax_data.csv')
@@ -79,6 +87,9 @@ print()
 print('export const inflationData = ' + json.dumps(inflation_data, indent=2) + ';')
 print()
 print('export const cumulativeInflation = ' + json.dumps(cumulative, indent=2) + ';')
+print()
+print('// Median household income for Oak Park, IL (ACS 5-year + 3-year; 2006 extrapolated)')
+print('export const medianHouseholdIncome = ' + json.dumps(income_data, indent=2) + ';')
 print()
 print('export const agencyDisplayNames = ' + json.dumps(agency_display_names, indent=2) + ';')
 print()

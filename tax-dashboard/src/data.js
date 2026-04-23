@@ -1264,6 +1264,29 @@ export const cumulativeInflation = {
   "2024": 1.5597245989844308
 };
 
+// Median household income for Oak Park, IL (ACS 5-year + 3-year; 2006 extrapolated)
+export const medianHouseholdIncome = {
+  "2006": 75704,
+  "2007": 74614,
+  "2008": 72465,
+  "2009": 72435,
+  "2010": 73068,
+  "2011": 74141,
+  "2012": 75118,
+  "2013": 78802,
+  "2014": 78895,
+  "2015": 80196,
+  "2016": 82826,
+  "2017": 87271,
+  "2018": 91945,
+  "2019": 94646,
+  "2020": 96945,
+  "2021": 98081,
+  "2022": 103264,
+  "2023": 108026,
+  "2024": 110820
+};
+
 export const agencyDisplayNames = {
   "TOWN OAK PARK": "Oak Park Township",
   "GENERAL ASSISTANCE OAK PARK": "General Assistance",
