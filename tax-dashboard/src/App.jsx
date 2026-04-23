@@ -275,7 +275,7 @@ function App() {
         const cpiGrowth = ((cpiEnd / cpiStart) - 1) * 100;
         const cpiCAGR = yearDiff > 0 ? (Math.pow(cpiEnd / cpiStart, 1 / yearDiff) - 1) * 100 : 0;
 
-        return [
+        const traces = [
           {
             x: ['Grand Total'],
             y: [growth],
@@ -298,6 +298,25 @@ function App() {
             hovertemplate: '<b>CPI</b><br>Total Growth: %{y:.1f}%<br>Annual Growth: ' + cpiCAGR.toFixed(2) + '%<extra></extra>'
           }
         ];
+        if (showIncome) {
+          const incStart = medianHouseholdIncome[startYear];
+          const incEnd = medianHouseholdIncome[endYear];
+          if (incStart && incEnd) {
+            const incGrowth = ((incEnd / incStart) - 1) * 100;
+            const incCAGR = yearDiff > 0 ? (Math.pow(incEnd / incStart, 1 / yearDiff) - 1) * 100 : 0;
+            traces.push({
+              x: ['Grand Total'],
+              y: [incGrowth],
+              type: 'scatter',
+              mode: 'lines+markers',
+              name: 'Median HH Income',
+              line: { color: '#111827', width: 2, dash: 'dash' },
+              marker: { size: 10, color: '#111827', symbol: 'diamond' },
+              hovertemplate: '<b>Median HH Income</b><br>Total Growth: %{y:.1f}%<br>Annual Growth: ' + incCAGR.toFixed(2) + '%<extra></extra>'
+            });
+          }
+        }
+        return traces;
       } else {
         // Show growth between selected year range
         const [startYear, endYear] = yearRange;
@@ -330,7 +349,7 @@ function App() {
         const yearDiff = endYear - startYear;
         const cpiCAGR = yearDiff > 0 ? (Math.pow(cpiEnd / cpiStart, 1 / yearDiff) - 1) * 100 : 0;
 
-        return [
+        const traces = [
           {
             x: agencyList,
             y: growth,
@@ -352,6 +371,24 @@ function App() {
             hovertemplate: '<b>CPI</b><br>Total Growth: %{y:.1f}%<br>Annual Growth: ' + cpiCAGR.toFixed(2) + '%<extra></extra>'
           }
         ];
+        if (showIncome) {
+          const incStart = medianHouseholdIncome[startYear];
+          const incEnd = medianHouseholdIncome[endYear];
+          if (incStart && incEnd) {
+            const incGrowth = ((incEnd / incStart) - 1) * 100;
+            const incCAGR = yearDiff > 0 ? (Math.pow(incEnd / incStart, 1 / yearDiff) - 1) * 100 : 0;
+            traces.push({
+              x: agencyList,
+              y: Array(agencyList.length).fill(incGrowth),
+              type: 'scatter',
+              mode: 'lines',
+              name: 'Median HH Income',
+              line: { color: '#111827', width: 2, dash: 'dash' },
+              hovertemplate: '<b>Median HH Income</b><br>Total Growth: %{y:.1f}%<br>Annual Growth: ' + incCAGR.toFixed(2) + '%<extra></extra>'
+            });
+          }
+        }
+        return traces;
       }
     } else if (chartType === 'stacked') {
       if (showGrandTotal) {
@@ -698,7 +735,14 @@ function App() {
 
                 <section>
                   <h3 className="font-bold text-lg mb-2">Median Household Income</h3>
-                  <p>On the line chart you can toggle an overlay of Oak Park's median household income on a right-hand axis. Values come from the U.S. Census Bureau's American Community Survey (ACS) — 5-year estimates from 2009 onward, 3-year estimates for 2007-2008, and a linear back-extrapolation for 2006. When inflation adjustment is on, both the levy and income series are expressed in {minYear} dollars.</p>
+                  <p>You can toggle an overlay of Oak Park's median household income on the line and growth-comparison charts. Values come from the U.S. Census Bureau's American Community Survey (ACS). Each year has its own ACS estimate, because Census publishes a new release every year using a rolling window of survey data labeled by its end year (e.g. the 2024 5-year estimate pools data from 2020-2024).</p>
+                  <ul className="list-disc pl-5 mt-2 space-y-1">
+                    <li><strong>2009-{maxYear}</strong>: ACS 5-year estimates — one release per year, each a rolling 5-year average ending in the labeled year.</li>
+                    <li><strong>2007-2008</strong>: ACS 3-year estimates (the 3-year program was discontinued after 2013) — one release per year, rolling 3-year averages.</li>
+                    <li><strong>{minYear}</strong>: no ACS release exists for Oak Park this early (it's below the population cutoff for ACS 1-year, and the earliest 3-year release is labeled 2007). The 2007 value is carried back to cover this one year. <em>No other year is filled or interpolated.</em></li>
+                  </ul>
+                  <p className="mt-2">Because 5-year estimates are rolling averages, sharp year-to-year income swings are smoothed out — the 5-year figure for 2020 still reflects some pre-pandemic years, for example.</p>
+                  <p className="mt-2">When inflation adjustment is on, both the levy and income series are expressed in {minYear} dollars.</p>
                 </section>
 
                 <section>
@@ -864,15 +908,15 @@ function App() {
                     type="checkbox"
                     checked={showIncome}
                     onChange={(e) => setShowIncome(e.target.checked)}
-                    disabled={chartType !== 'line'}
+                    disabled={chartType !== 'line' && chartType !== 'bar'}
                     className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 disabled:opacity-50"
                   />
-                  <span className={`text-sm font-semibold ${chartType !== 'line' ? 'text-gray-400' : 'text-gray-700'}`}>
+                  <span className={`text-sm font-semibold ${(chartType !== 'line' && chartType !== 'bar') ? 'text-gray-400' : 'text-gray-700'}`}>
                     Show Median Household Income
                   </span>
                 </label>
                 <p className="text-xs text-gray-500 mt-1">
-                  Overlay ACS income on a right-hand axis (line chart only)
+                  Overlay ACS income on line and growth-comparison charts
                 </p>
               </div>
 

@@ -1266,7 +1266,7 @@ export const cumulativeInflation = {
 
 // Median household income for Oak Park, IL (ACS 5-year + 3-year; 2006 extrapolated)
 export const medianHouseholdIncome = {
-  "2006": 75704,
+  "2006": 74614,
   "2007": 74614,
   "2008": 72465,
   "2009": 72435,

@@ -10,9 +10,11 @@ Strategy:
   - 2007, 2008: ACS 3-year estimates (end-year labeled). 3-year was
     discontinued after 2013 but covers places down to 20k pop, so Oak Park
     qualifies. This avoids extrapolating.
-  - 2006: linearly back-extrapolated one year using the 2007->2009 slope.
-    (The 2007->2008 dip was recession-driven; using the two-year slope
-    through the dip gives a more conservative estimate.)
+  - 2006: no ACS data exists for Oak Park that early (the village is under
+    the 65k population cutoff for ACS 1-year, and 3-year/5-year releases
+    don't reach back this far). As a placeholder we carry the 2007 value
+    back to 2006 (marked "carryback") so the series spans the full tax-data
+    range. Readers should treat 2006 as approximate.
 
 Writes income_data.csv with columns: year, median_household_income, source
 """
@@ -69,13 +71,12 @@ def main() -> None:
         rows.append((year, value, "acs5"))
         print(f"  {year} (5yr): ${value:,}", file=sys.stderr)
 
-    # Back-extrapolate 2006 from the 2007 -> 2009 slope.
+    # Carry the 2007 value back to 2006 so the series covers the full tax-data
+    # range. No ACS release reaches Oak Park for years before 2007.
     vals = {y: v for y, v, _ in rows}
-    if 2007 in vals and 2009 in vals:
-        slope = (vals[2009] - vals[2007]) / 2
-        y2006 = int(round(vals[2007] - slope))
-        rows.insert(0, (2006, y2006, "extrapolated"))
-        print(f"  2006 (extrapolated): ${y2006:,}", file=sys.stderr)
+    if 2007 in vals:
+        rows.insert(0, (2006, vals[2007], "carryback-from-2007"))
+        print(f"  2006 (carried back from 2007): ${vals[2007]:,}", file=sys.stderr)
 
     rows.sort(key=lambda r: r[0])
 

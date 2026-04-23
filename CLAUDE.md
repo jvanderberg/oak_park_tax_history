@@ -15,8 +15,8 @@
 - **Series strategy** (Oak Park is below ACS 1-year's 65k population cutoff):
   - 2009+: ACS 5-year estimates (`/data/{year}/acs/acs5`), labeled by end year
   - 2007, 2008: ACS 3-year estimates (`/data/{year}/acs/acs3`, discontinued after 2013)
-  - 2006: linear back-extrapolation using the 2007→2009 slope (2008 alone is
-    recession-distorted, so the two-year slope is the better anchor)
+  - 2006: 2007 value carried back (no ACS release reaches Oak Park before 2007).
+    Marked as `carryback-from-2007` in the `source` column — treat as approximate.
 - Fetcher: `fetch_income_data.py` → `income_data.csv`
 
 ### Agency Codes
